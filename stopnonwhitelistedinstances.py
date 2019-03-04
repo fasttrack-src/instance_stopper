@@ -1,7 +1,7 @@
 import boto3, json
 from botocore.exceptions import ClientError
 
-run = False
+run = True
 
 # Importing whitelist.json to an array called whitelist
 with open("whitelist.json") as f:
