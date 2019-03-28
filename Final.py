@@ -6,6 +6,9 @@ run = False
 regions = ["us-east-2","us-east-1","us-west-1","us-west-2","ap-south-1","ap-northeast-3","ap-northeast-2","ap-southeast-1","ap-southeast-2","ap-northeast-1","ca-central-1","cn-north-1","cn-northwest-1","eu-central-1","eu-west-1","eu-west-2","eu-west-3","eu-north-1","sa-east-1"]
 
 def printregion(ec2):
+    """
+    This is just debugging
+    """
     try:
         response = ec2.describe_instances()
         # iid = []
@@ -29,10 +32,14 @@ def printregion(ec2):
 def getidforkillingregion(ec2,searchkey):
     try:
         response = ec2.describe_instances()
+        # IID is a list of instance ids that it wants to stop
         iid = []
+        # RNKIID is a list of running instance ids that do not wish to be stopped
         rnkiid = []
         for reservation in response["Reservations"]:
             for instance in reservation["Instances"]:
+                # Checking every instance
+                # 16 = Running
                 if instance["State"]["Code"] == 16 and checktags(instance["Tags"],searchkey) == False:
                     iid.append(instance["InstanceId"])
                 if instance["State"]["Code"] == 16 and checktags(instance["Tags"],searchkey):
@@ -41,6 +48,7 @@ def getidforkillingregion(ec2,searchkey):
         return iid,rnkiid
     except:
         return [],[]
+
 
 def checktags(tags,searchkey):
     for tag in tags:
@@ -71,10 +79,10 @@ def stopinstances(ec2,iid):
                 print(e)
 
 #Main Program
-def main(e,c):
+def main(_,__):
     for region in regions:
         ec2 = boto3.client('ec2',region_name=region)
-        iid,rnkiid = getidforkillingregion(ec2,"kill_daily")
+        iid,rnkiid = getidforkillingregion(ec2,"preserve")
         stopinstances(ec2,iid)
         if len(iid) > 0 or len(rnkiid) > 0:
             print(region)
