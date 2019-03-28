@@ -1,4 +1,5 @@
-import boto3,pprint
+import boto3
+from botocore.exceptions import ClientError
 
 run = False
 

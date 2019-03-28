@@ -1,6 +1,10 @@
 # Notes
 
+
 ## Cloudformation File
+
+### Cloudformation file generator
+add a function to change schedule time.
 
 ### Example AWS Lambda Cloudformation file.
 
