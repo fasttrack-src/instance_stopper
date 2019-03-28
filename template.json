@@ -50,7 +50,7 @@
             "Properties" : {
               "Description" : "This rule is used to trigger EC2 Killer Every Day at 11pm to kill instances which are not protected",
               "Name" : "EC2-Killer-Event",
-              "ScheduleExpression" : "rate(1 minute)",
+              "ScheduleExpression" : "cron(0 11 * * ? *)",
               "State" : "ENABLED",
               "Targets" : [{
                 "Arn": { "Fn::GetAtt": ["LambdaFunction", "Arn"] },
