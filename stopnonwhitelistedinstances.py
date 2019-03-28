@@ -1,7 +1,7 @@
 import boto3, json
 from botocore.exceptions import ClientError
 
-run = True
+run = False
 
 # Importing whitelist.json to an array called whitelist
 with open("whitelist.json") as f:
@@ -25,6 +25,7 @@ if "Instances" in response["Reservations"]:
         # This ensures only running instances are stopped
         if i["State"]["Code"] == 16:
             iid += i["InstanceId"]
+        print(i["Tags"])
     print(iid)
 
 # Getting all the non whitlisted instance ids and storing them in an array
