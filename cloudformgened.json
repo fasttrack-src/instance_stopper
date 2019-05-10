@@ -1,0 +1,72 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Resources": {
+        "Role" : {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                        "Statement": [{
+                          "Effect": "Allow",
+                          "Principal": {
+                            "Service": [ "lambda.amazonaws.com" ]
+                          },
+                          "Action": [ "sts:AssumeRole" ]
+                        }]
+                },
+                "ManagedPolicyArns": ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"],
+                "Path": "/",
+                "Policies": [ {
+                    "PolicyName": "EC2-Killer-Policy",
+                    "PolicyDocument": {
+                        "Version": "2012-10-17",
+                        "Statement": [{
+                            "Sid": "Stmt1553766506710",
+                            "Action": [
+                            "ec2:DescribeInstances",
+                            "ec2:StopInstances"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": "*"
+                        }]
+                    }
+                }],
+                "RoleName": "EC2-Killer-Role"
+            }
+        },
+        "LambdaFunction" : {
+            "Type" : "AWS::Lambda::Function",
+            "Properties" : {
+                "Code" : {"ZipFile" : { "Fn::Join" : ["\n", 
+["import boto3", "from botocore.exceptions import ClientError", "import pprint", "", "run = True", "", "regions = [\"us-east-2\",\"us-east-1\",\"us-west-1\",\"us-west-2\",\"ap-south-1\",\"ap-northeast-3\",\"ap-northeast-2\",\"ap-southeast-1\",\"ap-southeast-2\",\"ap-northeast-1\",\"ca-central-1\",\"cn-north-1\",\"cn-northwest-1\",\"eu-central-1\",\"eu-west-1\",\"eu-west-2\",\"eu-west-3\",\"eu-north-1\",\"sa-east-1\"]", "", "def printregion(ec2):", "    \"\"\"", "    This is just debugging", "    \"\"\"", "    try:", "        response = ec2.describe_instances()", "        # iid = []", "        # if \"Instances\" in response[\"Reservations\"]:", "        #     for i in response[\"Reservations\"][\"Instances\"]:", "        #         iid += i[\"InstanceId\"]", "        #     print(iid)", "        if len(response[\"Reservations\"]) > 0:", "            for reservation in response[\"Reservations\"]:", "                if len(reservation[\"Instances\"]) > 0:", "                    for instance in reservation[\"Instances\"]:", "                        print(instance[\"InstanceId\"])", "                        print(instance[\"State\"][\"Code\"])", "                        print(instance[\"Tags\"])", "                        if checktags(instance[\"Tags\"],\"kill_daily\"):", "                            print(\"This shouldn't be killed\")", "                        # pprint.pprint(instance)", "    except:", "        pass", "", "def getidforkillingregion(ec2,searchkey):", "    try:", "        response = ec2.describe_instances()", "        # IID is a list of instance ids that it wants to stop", "        iid = []", "        # RNKIID is a list of running instance ids that do not wish to be stopped", "        rnkiid = []", "        for reservation in response[\"Reservations\"]:", "            for instance in reservation[\"Instances\"]:", "                # Checking every instance", "                # 16 = Running", "                if instance[\"State\"][\"Code\"] == 16:", "                    if \"Tags\" not in instance:", "                        print(instance)", "                        iid.append(instance[\"InstanceId\"])", "                    else:", "                        if checktags(instance[\"Tags\"],searchkey) == False:", "                            iid.append(instance[\"InstanceId\"])", "                        else:", "                            rnkiid.append(instance[\"InstanceId\"])", "                            # print(instance[\"InstanceId\"],\" is running but does not want to be killed.\")", "        return iid,rnkiid", "    except:", "        return [],[]", "", "", "def checktags(tags,searchkey):", "    for tag in tags:", "        if tag[\"Key\"] == searchkey:", "            return True", "    return False", "", "def stopinstances(ec2,iid):", "    # This section does the actual stopping of the instances", "    # This also checks to ensure that there is an instance to be stopped.", "    instance_ids = iid", "    if len(instance_ids) > 0:", "        # This is a dry run test to ensure you have the correct perms to stop the instances", "        try:", "            ec2.stop_instances(InstanceIds=instance_ids, DryRun=True)", "        except ClientError as e:", "            if 'DryRunOperation' not in str(e):", "                raise", "", "        # This checks that it isn't a dev build", "        if run:", "            # Dry run succeeded, call stop_instances without dryrun", "            # This stops instances", "            try:", "                response = ec2.stop_instances(InstanceIds=instance_ids, DryRun=False)", "                print(response)", "            except ClientError as e:", "                print(e)", "", "#Main Program", "def main(_,__):", "    for region in regions:", "        ec2 = boto3.client('ec2',region_name=region)", "        iid,rnkiid = getidforkillingregion(ec2,\"preserve\")", "        stopinstances(ec2,iid)", "        if len(iid) > 0 or len(rnkiid) > 0:", "            print(region)", "            # printregion(ec2)", "            print(\"These Instance's want to be stopped \",iid)", "            print(\"These Instance's are running but don't want to be stopped \",rnkiid)"]]}},
+                "Description" : "This is used to destory instance which are not marked with a given key (kill_daily)",
+                "FunctionName" : "EC2-Instance-Killer",
+                "Handler" : "index.main",
+                "Timeout" : 60,
+                "Role" : {  "Fn::GetAtt": [   "Role",    "Arn"    ]},
+                "Runtime" : "python3.7"
+            }
+        },
+        "CloudWatchEvent" : {
+            "Type" : "AWS::Events::Rule",
+            "Properties" : {
+              "Description" : "This rule is used to trigger EC2 Killer Every Day at 11pm to kill instances which are not protected",
+              "Name" : "EC2-Killer-Event",
+              "ScheduleExpression" : "cron(0 11 * * ? *)",
+              "State" : "ENABLED",
+              "Targets" : [{
+                "Arn": { "Fn::GetAtt": ["LambdaFunction", "Arn"] },
+                "Id": "TargetFunctionV1"
+              }]
+            }
+        },
+        "PermissionForEventsToInvokeLambda": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": { "Fn::GetAtt": ["LambdaFunction", "Arn"] },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "events.amazonaws.com",
+              "SourceArn": { "Fn::GetAtt": ["CloudWatchEvent", "Arn"] }
+            }
+        }
+    }
+}
