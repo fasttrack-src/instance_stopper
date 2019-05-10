@@ -1,6 +1,9 @@
 import pystache
 import json
 
+cron = "cron(0 11 * * ? *)"
+# cron = "this is a test"
+
 template = "template.json"
 codefile = "Final.py"
 code = ""
@@ -17,11 +20,10 @@ dump = json.dumps(lines)
 
 code = '{"ZipFile" : { "Fn::Join" : ["\\n", ' + "\n"
 code += dump + "]}}"
-print(count)
 
 with open(template) as f:
     lines = "".join(f.readlines())
-    rend = pystache.render(lines,{"code":code})
+    rend = pystache.render(lines,{"code":code,"cron":cron})
 
 with open(output,"w") as f:
     f.write(rend)

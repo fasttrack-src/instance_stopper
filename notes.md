@@ -1,5 +1,22 @@
 # Notes
 
+## To Do
+
+1.  write test cases
+2.  test test cases
+
+## Test Cases
+
+1. State Code
+   1. A state code which should net a negative result
+   2. Valid State Code
+2. Tags
+   1. Tags which should net a negative result
+   2. No Tags
+   3. Valid Tags
+3. Check instances are stopped once the ID's have been decided opon
+4. Test Every Region
+
 
 ## Cloudformation File
 

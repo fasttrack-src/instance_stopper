@@ -1,5 +1,6 @@
 import boto3
 from botocore.exceptions import ClientError
+import pprint
 
 run = True
 
@@ -40,11 +41,16 @@ def getidforkillingregion(ec2,searchkey):
             for instance in reservation["Instances"]:
                 # Checking every instance
                 # 16 = Running
-                if instance["State"]["Code"] == 16 and checktags(instance["Tags"],searchkey) == False:
-                    iid.append(instance["InstanceId"])
-                if instance["State"]["Code"] == 16 and checktags(instance["Tags"],searchkey):
-                    rnkiid.append(instance["InstanceId"])
-                    # print(instance["InstanceId"]," is running but does not want to be killed.")
+                if instance["State"]["Code"] == 16:
+                    if "Tags" not in instance:
+                        print(instance)
+                        iid.append(instance["InstanceId"])
+                    else:
+                        if checktags(instance["Tags"],searchkey) == False:
+                            iid.append(instance["InstanceId"])
+                        else:
+                            rnkiid.append(instance["InstanceId"])
+                            # print(instance["InstanceId"]," is running but does not want to be killed.")
         return iid,rnkiid
     except:
         return [],[]
