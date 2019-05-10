@@ -6,7 +6,6 @@ cron = "cron(0 11 * * ? *)"
 
 template = "template.json"
 codefile = "Final.py"
-code = ""
 output = "cloudformgened.json"
 
 with open(codefile) as f:
