@@ -2,8 +2,6 @@
 
 ## To Do
 
-1.  Complete readme
-
 ## Test Cases
 
 1. State Code
