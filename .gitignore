@@ -4,7 +4,4 @@ Final
 .gitignore
 ec2.code-workspace
 Bug_Reports
-checkkey.py
-mytesting.py
-notes.md
 __pycache__

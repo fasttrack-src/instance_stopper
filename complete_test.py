@@ -1,5 +1,5 @@
 import boto3
-from Final import main
+from EC2_Instance_Stopper import main
 from moto import mock_ec2
 
 print_verbos = False
@@ -8,11 +8,11 @@ def print_log(s):
     if print_verbos: print(s)
 
 @mock_ec2
-def no_tags():
+def test_no_tags():
 
     # Creating running test instances with no tags
     client = boto3.client('ec2', region_name='us-west-1')
-    client.run_instances(ImageId="ami-1234abcd", MinCount=4, MaxCount=4)
+    client.run_instances(ImageId="ami-03cf127a", MinCount=4, MaxCount=4)
 
     # Stopping running instances with no tags
     print("Running with no tags and running instances")
@@ -20,7 +20,8 @@ def no_tags():
     client = boto3.client('ec2', region_name='us-west-1')
     instances = client.describe_instances()['Reservations'][0]['Instances']
     print_log(instances)
-    if any_running(instances): raise ValueError('Instance running when it shouldn\'t be')
+    # Error info: Instance running when it shouldn't be
+    assert not any_running(instances)
     print()
 
     # Stopping stoped instances with no tags
@@ -29,15 +30,16 @@ def no_tags():
     client = boto3.client('ec2', region_name='us-west-1')
     instances = client.describe_instances()['Reservations'][0]['Instances']
     print_log(instances)
-    if any_running(instances): raise ValueError('Instance running when it shouldn\'t be')
+    # Error info: Instance running when it shouldn't be
+    assert not any_running(instances)
     print()
 
 @mock_ec2
-def irrelevant_tags():
+def test_irrelevant_tags():
 
     # Creating running test instances with irrelevant tags
     client = boto3.client('ec2', region_name='us-west-1')
-    client.run_instances(ImageId="ami-1234abcd", MinCount=4, MaxCount=4,TagSpecifications=[{"ResourceType":"instance","Tags":[{"Key":"test","Value":"test"}]}])
+    client.run_instances(ImageId="ami-03cf127a", MinCount=4, MaxCount=4,TagSpecifications=[{"ResourceType":"instance","Tags":[{"Key":"test","Value":"test"}]}])
 
     # Stopping running instances with irrelevant tags
     print("Running with irrelevant tags and running instances")
@@ -45,7 +47,8 @@ def irrelevant_tags():
     client = boto3.client('ec2', region_name='us-west-1')
     instances = client.describe_instances()['Reservations'][0]['Instances']
     print_log(instances)
-    if any_running(instances): raise ValueError('Instance running when it shouldn\'t be')
+    # Error info: Instance running when it shouldn't be
+    assert not any_running(instances)
     print()
 
     # Stopping stoped instances with irrelevant tags
@@ -54,15 +57,16 @@ def irrelevant_tags():
     client = boto3.client('ec2', region_name='us-west-1')
     instances = client.describe_instances()['Reservations'][0]['Instances']
     print_log(instances)
-    if any_running(instances): raise ValueError('Instance running when it shouldn\'t be')
+    # Error info: Instance running when it shouldn't be
+    assert not any_running(instances)
     print()
 
 @mock_ec2
-def preserve_tags():
+def test_preserve_tags():
 
     # Creating running test instances with preserve tags
     client = boto3.client('ec2', region_name='us-west-1')
-    client.run_instances(ImageId="ami-1234abcd", MinCount=4, MaxCount=4,TagSpecifications=[{"ResourceType":"instance","Tags":[{"Key":"preserve","Value":""}]}])
+    client.run_instances(ImageId="ami-03cf127a", MinCount=4, MaxCount=4,TagSpecifications=[{"ResourceType":"instance","Tags":[{"Key":"preserve","Value":""}]}])
 
     # Atempting to stop running instances with preserve tags. Should not stop
     print("Running with preserve tags and running instances")
@@ -70,7 +74,8 @@ def preserve_tags():
     client = boto3.client('ec2', region_name='us-west-1')
     instances = client.describe_instances()['Reservations'][0]['Instances']
     print_log(instances)
-    if not all_running(instances): raise ValueError('Instance stopped when it shouldn\'t be')
+    # Error info: Instance stopped when it shouldn't be
+    assert all_running(instances)
     print()
 
 
@@ -87,10 +92,3 @@ def all_running(instances):
         if instance["State"]["Code"] != 16:
             running = False
     return running
-
-
-no_tags()
-
-irrelevant_tags()
-
-preserve_tags()

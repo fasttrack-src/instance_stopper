@@ -1,0 +1,6 @@
+{
+    "template":"template.json",
+    "codefile":"EC2-Instance-Stopper.py",
+    "output":"cloudformgened.json",
+    "cron":"cron(0 11 * * ? *)"
+}
